@@ -1,0 +1,14 @@
+(deflisten music
+  :initial ""
+  :onchange "eww update revealSpotify=true && sleep 5 && eww update revealSpotify=false"
+  "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
+
+(deflisten musicStatus "playerctl --follow status || true")
+
+(deflisten notifications
+  :initial ""
+  :onchange "eww update revealNotify=true && sleep 5 && eww update revealNotify=false"
+  "")
+
+
+(deflisten workspace0 "hyprland-workspaces `hyprctl monitors -j | jq -r '.[0].name'`")
