@@ -1,0 +1,117 @@
+## Path section
+# Set $PATH if ~/.local/bin exist
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH=$HOME/.local/bin:$PATH
+fi
+
+eval "$(starship init zsh)"
+
+function set_win_title(){
+    echo -ne "\033]0; $USER@$HOST:${PWD/$HOME/~} \007"
+}
+precmd_functions+=(set_win_title)
+
+## Plugins section: Enable fish style features
+# Use syntax highlighting
+source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Use autosuggestion
+source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+## Options section
+setopt correct                                                  # Auto correct mistakes
+setopt extendedglob                                             # Extended globbing. Allows using regular expressions with *
+setopt nocaseglob                                               # Case insensitive globbing
+setopt rcexpandparam                                            # Array expension with parameters
+setopt nocheckjobs                                              # Don't warn about running processes when exiting
+setopt numericglobsort                                          # Sort filenames numerically when it makes sense
+setopt nobeep                                                   # No beep
+setopt appendhistory                                            # Immediately append history instead of overwriting
+setopt histignorealldups                                        # If a new command is a duplicate, remove the older one
+setopt autocd                                                   # if only directory path is entered, cd there.
+setopt auto_pushd
+setopt pushd_ignore_dups
+setopt pushdminus
+
+# Completion.
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'       # Case insensitive tab completion
+zstyle ':completion:*' rehash true                              # automatically find new executables in path 
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"         # Colored completion (different colors for dirs/files/etc)
+zstyle ':completion:*' completer _expand _complete _ignored _approximate
+zstyle ':completion:*' menu select
+zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
+zstyle ':completion:*:descriptions' format '%U%F{cyan}%d%f%u'
+
+# Speed up completions
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.cache/zcache
+
+# automatically load bash completion functions
+autoload -U +X bashcompinit && bashcompinit
+
+HISTFILE=~/.zhistory
+HISTSIZE=50000
+SAVEHIST=10000
+
+setopt INC_APPEND_HISTORY
+setopt EXTENDED_HISTORY
+setopt HIST_FIND_NO_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt vi
+export VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
+export VI_MODE_SET_CURSOR=true
+export EDITOR=nvim
+export LC_CTYPE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# ╭──────────────────────────╮
+# │ Install plugins using zr │
+# ╰──────────────────────────╯
+. <(zr \
+  ohmyzsh/ohmyzsh.git/plugins/brew/brew.plugin.zsh \
+  ohmyzsh/ohmyzsh.git/plugins/colored-man-pages/colored-man-pages.plugin.zsh \
+  ohmyzsh/ohmyzsh.git/plugins/dirhistory/dirhistory.plugin.zsh \
+  ohmyzsh/ohmyzsh.git/plugins/git-hubflow/git-hubflow.plugin.zsh \
+  ohmyzsh/ohmyzsh.git/plugins/vi-mode/vi-mode.plugin.zsh \
+  djui/alias-tips.git/alias-tips.plugin.zsh
+)
+
+    # ohmyzsh/ohmyzsh.git/plugins/docker-compose/docker-compose.plugin.zsh
+    # ohmyzsh/ohmyzsh.git/plugins/rake-fast/rake-fast.plugin.zsh \
+install_completions() {
+  . <(zr \
+    ohmyzsh/ohmyzsh.git/plugins/cargo/_cargo \
+    ohmyzsh/ohmyzsh.git/plugins/rust/_rust \
+    ohmyzsh/ohmyzsh.git/plugins/rustup/_rustup \
+    ohmyzsh/ohmyzsh.git/plugins/gem/_gem \
+    ohmyzsh/ohmyzsh.git/plugins/git/git.plugin.zsh \
+    ohmyzsh/ohmyzsh.git/plugins/tmux/tmux.plugin.zsh
+  )
+  eval "$(fnm completions --shell zsh)"
+}
+install_completions
+
+alias ll="eza --long --all --group --icons --header"
+
+#  ╭────────────╮
+#  │ Load Mcfly │
+#  ╰────────────╯
+export MCFLY_FUZZY=true
+export MCFLY_RESULTS=20
+export MCFLY_INTERFACE_VIEW=BOTTOM
+export MCFLY_RESULTS_SORT=LAST_RUN
+export MCFLY_KEY_SCHEME=vim
+eval "$(mcfly init zsh)"
+
+eval "$(zoxide init zsh)"
+
+# fnm
+export PATH="/home/sloveless/.local/share/fnm:$PATH"
+eval "$(fnm completions --shell zsh)"
+eval "`fnm env`"
+
+## Run ~neofetch~ fastfetch
+fastfetch
