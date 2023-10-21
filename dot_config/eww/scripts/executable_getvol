@@ -1,0 +1,9 @@
+#!/bin/sh
+# vim: ft=bash
+
+if command wpctl get-volume @DEFAULT_SINK@ | awk '{print $3}' | rg MUTED &>/dev/null; then
+    echo 0
+    # exit
+else
+    wpctl get-volume @DEFAULT_SINK@ | awk '{print $2}'
+fi

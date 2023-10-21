@@ -1,142 +1,76 @@
-; Add the includes
-
-(include "variables.yuck")
-(include "controls.yuck")
-(include "listeners.yuck")
-(include "metrics.yuck")
-(include "pollers.yuck")
-(include "revealer.yuck")
-
-
 (defwidget bar []
   (centerbox :orientation "h"
-    (box :orientation "h" :space-evenly false (workspaces0) )
-    (box :orientation "h" :space-evenly false
-      (label :text " ${time} 󰇝 ")
-      (label :text "${date}")
-      )
-    (sidestuff)
-  )
-)
-
-;; (defwidget bottombar []
-;;   (centerbox :orientation "h"
-;;     (box :halign "start" :orientation "h" :space-evenly false (workspaces))
-;;     (box :halign "end" :orientation "h" :space-evenly false)
-;;     (box :orientation "h" :halign "end" :space-evenly false
-;;       (metric :icon ""
-;;         :onclick "htop --sort-key PERCENT_MEM"
-;;       :value {EWW_RAM.used_mem_perc})
-;;       (metric :icon ""
-;;         :onclick "htop --sort-key PERCENT_CPU"
-;;       :value {EWW_CPU.avg})
-;;       (metric :icon ""
-;;         :onclick "mc"
-;;         :value "${round(EWW_DISK["/"].used_perc, 0)}")
-;;       (network)
-;;     )
-;;   )
-;; )
-
-(defwidget workspaces0 []
-  (eventbox :onscroll "hyprctl dispatch workspace `echo {} | sed 's/up/+/\' | sed 's/down/-/'`1"
-    (box :class "workspaces"
-      (for i in workspace0
-        (button
-          :onclick "hyprctl dispatch workspace ${i.id}"
-          :class "${i.class}"
-          "${i.name}")))))
-      ;; (for i in workspace0
-      ;;   (button
-      ;;     :onclick "hyprctl dispatch workspace ${i.id}"
-      ;;     :class "${i.class}"
-      ;;     "${i.name}")))))
-
-(defwidget icon-module [icon ?class ?visible]
-  (box :class "${class} icon-module"
-    :orientation "h"
-    :halign "start"
-    :space-evenly false
-    :visible {visible ?: true} ; because the argument is optional
-    (label :class "icon-module__icon" :text "${icon}")
-    (children)
-  )
-)
-
-(defwidget _battery [battery status one two three four five charge]
-  (box :class "bat-box" :space-evenly true :spacing 10
-    (label :text {status == 'Charging' ? "${battery}%${charge}  " :
-      battery < 35 ? five :
-        battery < 20 ? four :
-          battery < 50 ? three :
-            battery < 95 ? two : one})))
+    (workspaces)
+    (music)
+    (sidestuff)))
 
 (defwidget sidestuff []
-  (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end" :spacing 25
-    (box :orientation "h" :spacing 6 :space-evenly false :halign "end"
-      (volume)
-      (_battery :status {EWW_BATTERY["macsmc-battery"].status}
-          :battery {EWW_BATTERY["macsmc-battery"].capacity}
-          :charge ""
-          :one ""
-          :two ""
-          :three ""
-          :four ""
-          :five "")
-      (notifications)
-    )
-  )
-)
+  (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    (metric :label ""
+            :value volume
+            :onchange "wpctl set-mute @DEFAULT_SINK@ 0; wpctl set-volume @DEFAULT_SINK@ {}")
+    (metric :label ""
+            :value {EWW_RAM.used_mem_perc}
+            :onchange "")
+    (metric :label "󰨣"
+            :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
+            :onchange "")
+    time))
 
-(defwidget volume [?class]
-  (box :space-evenly false
-    :class "hover-module ${class}"
-    (revealer-on-hover :class "hl-on-hover"
-      :var revealVolume
-      :varname "revealVolume"
-      :transition "slideleft"
-      :class "volume"
+(defwidget workspaces []
+  (box :class "workspaces"
+       :orientation "h"
+       :space-evenly true
+       :halign "start"
+       :spacing 10
+    (button :onclick "wmctrl -s 0" 1)
+    (button :onclick "wmctrl -s 1" 2)
+    (button :onclick "wmctrl -s 2" 3)
+    (button :onclick "wmctrl -s 3" 4)
+    (button :onclick "wmctrl -s 4" 5)
+    (button :onclick "wmctrl -s 5" 6)
+    (button :onclick "wmctrl -s 6" 7)
+    (button :onclick "wmctrl -s 7" 8)
+    (button :onclick "wmctrl -s 8" 9)))
 
-      (hovered-sign :var revealVolume
-        (label :text "")
-        (label :text "")
-      )
-      (metric :icon ""
-        :class "volume"
-        :value {volume == "" ? 0.0 : volume }
-        :onchange "wpctl set-volume @DEFAULT_SINK@ {}")
-        "  ")
-  )
-)
+(defwidget music []
+  (box :class "music"
+       :orientation "h"
+       :space-evenly false
+       :halign "center"
+    {music != "" ? "🎵${music}" : ""}))
 
 
-(defwidget notifications [?class]
-  (box :space-evenly false
-    :class "hover-module ${class}"
-    (revealer-on-hover :class "hl-on-hover"
-      :var revealNotify
-      :varname "revealNotify"
-      :transition "slideleft"
-      :class "notifications"
+(defwidget metric [label value onchange]
+  (box :orientation "h"
+       :class "metric"
+       :space-evenly false
+    (box :class "label" label)
+    (scale :min 0
+           :max 101
+           :active {onchange != ""}
+           :value value
+           :onchange onchange)))
 
-      (hovered-sign :var revealNotify
-        (label :class "notifications" :text "")
-        (label :class "notifications" :text "")
-      )
-      (button :onclick "swaync-client -t" (label :class "notifications" :text " ${notifications} "))
-    "    ")
-  )
-)
+
+
+(deflisten music :initial ""
+  "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
+
+(defpoll volume :interval "1s"
+  "scripts/getvol")
+
+(defpoll time :interval "10s"
+  "date '+%H:%M %b %d, %Y'")
 
 (defwindow bar
   :monitor 0
   :windowtype "dock"
   :exclusive true
-  :stacking "fg"
   :geometry (geometry :x "0%"
-    :y "0%"
-    :width "100%"
-    :height "5px"
-    :anchor "top center")
-  (bar)
-)
+                      :y "0%"
+                      :width "100%"
+                      :height "6px"
+                      :anchor "top center")
+  :reserve (struts :side "top" :distance "4%")
+  (bar))

@@ -11,4 +11,6 @@
   "")
 
 
-(deflisten workspace0 "hyprland-workspaces `hyprctl monitors -j | jq -r '.[0].name'`")
+(deflisten workspace0
+  :initial "[]"
+  "hyprland-workspaces `hyprctl monitors -j | jq -r '.[0].name'`")
